@@ -1,32 +1,22 @@
 #include <Arduino.h>
 
-#define A                       1.f
-#define A_MIN                   -A
-#define F                       1.f
-#define W                       2.f * PI
-
-#define carrier_wave(t)         ( A * sin(W * F * t) )
-#define freq_factor(y)          ( 1.f + (y - A_MIN) )
-#define new_freq(y)             ( F * freq_factor(y) )
-#define generated_wave(y, t)    ( A * sin(W * new_freq(y) * t) )
-
-float x = 0.f;
+float sinVal = 0.f;
+const float frequency  = 0.1f;
 
 void setup() {
-  Serial.begin(9600);
-  pinMode(LED_BUILTIN, OUTPUT);
+    Serial.begin(9600);
+    pinMode(LED_BUILTIN, OUTPUT);
 }
 
 void loop() {
-  float t = millis() / 1000.f;
+    float t = millis() / 1000.f;
+    float f = frequency * sinVal / 255;
 
-  x = carrier_wave(t);
-  Serial.println(new_freq(x));
-  float y = generated_wave(x, t);
+    float w = 2.f * PI * frequency;
+    sinVal = 128.f + 128.f * sin(w * t);
 
-  if(y >= 0.f) {
-      digitalWrite(LED_BUILTIN, HIGH);
-  } else if (y < 0.f) {
-      digitalWrite(LED_BUILTIN, LOW);
-  }
+    digitalWrite(LED_BUILTIN,HIGH);
+    delay(sinVal);
+    digitalWrite(LED_BUILTIN,LOW);
+    delay(sinVal);
 }
