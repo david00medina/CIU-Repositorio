@@ -2083,14 +2083,14 @@ function(REMOVE_COMMENTS SRC_VAR OUT_VAR)
     set(SRC ${${SRC_VAR}})
 
     #message(STATUS "removing comments from: ${FILE}")
-    #file(WRITE "${CMAKE_BINARY_DIR}/${FILE}_pre_remove_comments.txt" ${SRC})
-    #message(STATUS "\n${SRC}")
+    #file(WRITE "${CMAKE_BINARY_DIR}/${FILE}_pre_remove_comments.txt" ${src})
+    #message(STATUS "\n${src}")
 
     # remove all comments
     string(REGEX REPLACE "([/][/][^\n]*)|([/][\\*]([^\\*]|([\\*]+[^/\\*]))*[\\*]+[/])" "" OUT "${SRC}")
 
-    #file(WRITE "${CMAKE_BINARY_DIR}/${FILE}_post_remove_comments.txt" ${SRC})
-    #message(STATUS "\n${SRC}")
+    #file(WRITE "${CMAKE_BINARY_DIR}/${FILE}_post_remove_comments.txt" ${src})
+    #message(STATUS "\n${src}")
 
     set(${OUT_VAR} ${OUT} PARENT_SCOPE)
 
