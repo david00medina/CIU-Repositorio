@@ -40,7 +40,6 @@ public class Pong extends PApplet {
     private static final int scoreSize = 128;
 
     private Serial myPort;
-    private int sensorPaddlePos;
 
     @Override
     public void settings() {
@@ -106,16 +105,14 @@ public class Pong extends PApplet {
     private boolean[] xBallMotion() {
         boolean[] result = {false, false};
         ball.x += ball.xSpeed * ball.xDir;
+
         boolean isCollisionRight = ball.x + ball.DIAMETER / 2.f > playerR.x1 && ball.x - ball.DIAMETER / 2.f < playerR.x1 + playerR.x2
                 && ball.y + ball.DIAMETER / 2.f > playerR.y1 && ball.y - ball.DIAMETER / 2.f < playerR.y1 + playerR.y2;
 
         boolean isCollisionLeft = ball.x + ball.DIAMETER / 2.f > playerL.x1 && ball.x - ball.DIAMETER / 2.f < playerL.x1 + playerL.x2
                 && ball.y + ball.DIAMETER / 2.f > playerL.y1 && ball.y - ball.DIAMETER / 2.f < playerL.y1 + playerL.y2;
-        /*int collisionRight = playerR.x1 - (ball.x + ball.DIAMETER);
-        int collisionLeft = ball.x - (playerL.x1 + ball.DIAMETER + playerL.x2);
 
-        boolean isCollisionRight = collisionRight < -playerR.x2 && ball.y >= playerR.y1 && ball.y <= (playerR.y1 + playerR.y2);
-        boolean isCollisionLeft = collisionLeft < -playerR.x2 && ball.y >= playerL.y1 && ball.y <= (playerL.y1 + playerL.y2);*/
+
         if (isCollisionRight || isCollisionLeft) {
             hitPaddleSound.play();
             ball.xDir = -ball.xDir;
