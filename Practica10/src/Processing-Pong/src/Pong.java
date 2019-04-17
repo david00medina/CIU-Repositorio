@@ -1,5 +1,6 @@
 import processing.core.PApplet;
 import processing.sound.*;
+import processing.serial.*;
 
 public class Pong extends PApplet {
     private SoundFile hitWallSound;
@@ -38,6 +39,9 @@ public class Pong extends PApplet {
 
     private static final int scoreSize = 128;
 
+    private Serial myPort;
+    private int sensorPaddlePos;
+
     @Override
     public void settings() {
         super.settings();
@@ -64,6 +68,9 @@ public class Pong extends PApplet {
         hitWallSound = new SoundFile(this, "res/ping_pong_8bit_plop.wav");
         hitPaddleSound = new SoundFile(this, "res/ping_pong_8bit_beeep.wav");
         pointSound = new SoundFile(this, "res/ping_pong_8bit_peeeeeep.wav");
+
+        myPort = new Serial(this, Serial.list()[0], 115200);
+        myPort.bufferUntil('\n');
     }
 
     @Override
@@ -80,26 +87,17 @@ public class Pong extends PApplet {
         }
     }
 
-
-    public static void main(String[] args) {
-        PApplet.main("Pong");
-    }
-
     @Override
     public void keyPressed() {
         super.keyPressed();
-        if (key == CODED) {
-            if (keyCode == UP && playerR.y1 > (0 + world.margin)) playerR.y1 -= playerR.speed;
-            else if (keyCode == DOWN && playerR.y1 < (height - (world.margin + playerR.y2 + world.margin)))
-                playerR.y1 += playerR.speed;
-        } else {
-            if (key == 'w' && playerL.y1 > (0 + world.margin)) playerL.y1 -= playerL.speed;
-            else if (key == 's' && playerL.y1 < (height - (world.margin + playerL.y2 + world.margin)))
-                playerL.y1 += playerL.speed;
-        }
+
+        if (key == 'w' && playerL.y1 > (0 + world.margin)) playerL.y1 -= playerL.speed;
+        else if (key == 's' && playerL.y1 < (height - (world.margin + playerL.y2 + world.margin)))
+            playerL.y1 += playerL.speed;
+
     }
 
-    public void delimitBallMotion() {
+    private void delimitBallMotion() {
         if (ball.y < (ball.DIAMETER / 2 + world.margin)) ball.y = ball.DIAMETER / 2 + world.margin;
         else if (ball.y > height - (ball.DIAMETER / 2 + world.margin))
             ball.y = height - (ball.DIAMETER / 2 + world.margin);
@@ -108,20 +106,27 @@ public class Pong extends PApplet {
     private boolean[] xBallMotion() {
         boolean[] result = {false, false};
         ball.x += ball.xSpeed * ball.xDir;
-        int collisionRight = playerR.x1 - (ball.x + ball.DIAMETER);
+        boolean isCollisionRight = ball.x + ball.DIAMETER / 2.f > playerR.x1 && ball.x - ball.DIAMETER / 2.f < playerR.x1 + playerR.x2
+                && ball.y + ball.DIAMETER / 2.f > playerR.y1 && ball.y - ball.DIAMETER / 2.f < playerR.y1 + playerR.y2;
+
+        boolean isCollisionLeft = ball.x + ball.DIAMETER / 2.f > playerL.x1 && ball.x - ball.DIAMETER / 2.f < playerL.x1 + playerL.x2
+                && ball.y + ball.DIAMETER / 2.f > playerL.y1 && ball.y - ball.DIAMETER / 2.f < playerL.y1 + playerL.y2;
+        /*int collisionRight = playerR.x1 - (ball.x + ball.DIAMETER);
         int collisionLeft = ball.x - (playerL.x1 + ball.DIAMETER + playerL.x2);
 
         boolean isCollisionRight = collisionRight < -playerR.x2 && ball.y >= playerR.y1 && ball.y <= (playerR.y1 + playerR.y2);
-        boolean isCollisionLeft = collisionLeft < -playerR.x2 && ball.y >= playerL.y1 && ball.y <= (playerL.y1 + playerL.y2);
+        boolean isCollisionLeft = collisionLeft < -playerR.x2 && ball.y >= playerL.y1 && ball.y <= (playerL.y1 + playerL.y2);*/
         if (isCollisionRight || isCollisionLeft) {
             hitPaddleSound.play();
             ball.xDir = -ball.xDir;
-        } else if (collisionRight < -playerR.x2 * 10) {
+        }
+
+        if (ball.x - ball.DIAMETER / 2.f < 0) {
             pointSound.play();
             ball.xDir = 1;
             ball.spawn();
             result[1] = true;
-        } else if (collisionLeft < -playerL.x2 * 10) {
+        } else if (ball.x + ball.DIAMETER/ 2.f > WIDTH) {
             pointSound.play();
             ball.xDir = -1;
             ball.spawn();
@@ -142,5 +147,16 @@ public class Pong extends PApplet {
         }
     }
 
+    public void serialEvent(Serial p) {
+        String s = p.readString();
+        if(s != null) {
+            s = s.replace("\r\n", "");
+            if (s.matches("(\\d+)")) playerR.y1 = (int) map((float) Integer.parseInt(s), 0.f, 255.f, 0.f, (float) HEIGHT);
+        }
+    }
+
+    public static void main(String[] args) {
+        PApplet.main("Pong");
+    }
 
 }
