@@ -1,0 +1,63 @@
+\begin{thebibliography}{}
+
+\bibitem [\protect \citeauthoryear {%
+Arduino%
+}{%
+Arduino%
+}{%
+{\protect \APACyear {{\protect \bibnodate {}}}}%
+}]{%
+arduino-reference}
+\APACinsertmetastar {%
+arduino-reference}%
+\begin{APACrefauthors}%
+Arduino.%
+\end{APACrefauthors}%
+\unskip\
+\newblock
+\APACrefYearMonthDay{{\protect \bibnodate {}}}{}{}.
+\newblock
+\APACrefbtitle {{Language Reference}.} {{Language Reference}.}
+\newblock
+\APAChowpublished {\url{https://www.arduino.cc/reference/en/}}.
+\newblock
+\APACaddressPublisherEqAuth{}{Arduino}.
+\newblock
+\APACrefnote{Accessed: 2019-04-16}
+\PrintBackRefs{\CurrentBib}
+
+\bibitem [\protect \citeauthoryear {%
+Benlliure~Jiménez%
+, Medina~Medina%
+, Brito~Ramos%
+\BCBL {}\ \BBA {} López~González%
+}{%
+Benlliure~Jiménez%
+\ \protect \BOthers {.}}{%
+{\protect \APACyear {{\protect \bibnodate {}}}}%
+}]{%
+repositorio-github}
+\APACinsertmetastar {%
+repositorio-github}%
+\begin{APACrefauthors}%
+Benlliure~Jiménez, M\BPBI C.%
+, Medina~Medina, D\BPBI A.%
+, Brito~Ramos, C.%
+\BCBL {}\ \BBA {} López~González, N.%
+\end{APACrefauthors}%
+\unskip\
+\newblock
+\APACrefYearMonthDay{{\protect \bibnodate {}}}{}{}.
+\newblock
+\APACrefbtitle {{Repositorio CIU - Practica 9}.} {{Repositorio CIU - Practica
+  9}.}
+\newblock
+\APAChowpublished
+  {\url{https://github.com/david00medina/CIU-Repositorio/tree/master/Practica9}}.
+\newblock
+\APACaddressPublisher{}{Medina Medina, David A.}
+\newblock
+\APACrefnote{Accessed: 2019-04-16}
+\PrintBackRefs{\CurrentBib}
+
+\end{thebibliography}
