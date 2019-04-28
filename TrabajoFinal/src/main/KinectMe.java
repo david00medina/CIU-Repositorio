@@ -1,25 +1,30 @@
 package main;
 
-import kinect.Kinect;
-import kinect.KinectAnathomy;
-import kinect.KinectSelector;
+import control.csv.CSVTools;
+import control.kinect.Kinect;
+import control.kinect.KinectAnathomy;
+import control.kinect.KinectSelector;
 import kinect4WinSDK.SkeletonData;
-import object.InteractiveVolume;
-import object.instrument.Guitar;
+import model.DancerData;
+import org.apache.commons.csv.CSVFormat;
 import processing.core.PApplet;
 import processing.core.PShape;
 import processing.core.PVector;
 
+import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+
 public class KinectMe extends PApplet {
-    private static final boolean DEBUG_AREAS = true;
-    private static final boolean DEBUG_VERTICES = true;
     private static final int SCALE = 60;
     private static final int COLS = 60;
     private static final int ROWS = 60;
 
     private Kinect kinect;
-    private Guitar guitar;
     private PShape floor;
+
+    private boolean printHeader = true;
 
     @Override
     public void settings() {
@@ -34,50 +39,10 @@ public class KinectMe extends PApplet {
         stroke(255);
 
         kinect = new Kinect(this, null, null, null);
-        kinect.setHandRadius(10);
+//        control.kinect.setHandRadius(0);
 
-        spawnGuitar();
-
+        loadDancerDataCSV();
         createFloor();
-    }
-
-    private void spawnGuitar() {
-        PShape guitarModel = loadShape("../../data/models/guitar/guitar.obj");
-        guitar = new Guitar(this, guitarModel, null, null);
-
-        guitar.setPos(new PVector(width / 2.f, 4.f * height / 6.f, 150));
-        guitar.setRotation(new PVector(radians(0), radians(0), radians(-140)));
-        guitar.scale(55.f);
-
-        addGuitarInteraction("NECK", -25, -77, 4,
-                radians(0), radians(0), radians(5),
-                50, 4, 4);
-
-        addGuitarInteraction("STRINGS", 25, -30, 4,
-                radians(0), radians(0), radians(5),
-                20, 4, 6);
-
-        guitar.doDrawInteractionVolume(DEBUG_AREAS);
-    }
-
-    private void addGuitarInteraction(String id, float xOffset, float yOffset, float zOffset,
-                                      float xRotationOffset, float yRotationOffset, float zRotationOffset,
-                                      float width, float height, float depth) {
-        InteractiveVolume volume = new InteractiveVolume(this, id, width, height, depth);
-
-        volume.setTranslationOffset(xOffset, yOffset, zOffset);
-        volume.setRotationOffset(xRotationOffset, yRotationOffset, zRotationOffset);
-
-        volume.setPos(guitar.getPos().x,
-                guitar.getPos().y,
-                guitar.getPos().z);
-        volume.setRotation(guitar.getRotation().x,
-                guitar.getRotation().y,
-                guitar.getRotation().z);
-
-        guitar.getInteractions().add(volume);
-
-        volume.setVisualizeVertices(DEBUG_VERTICES);
     }
 
     @Override
@@ -90,8 +55,6 @@ public class KinectMe extends PApplet {
         kinect.refresh(KinectSelector.NONE, true);
 
         lights();
-
-        guitarInteraction();
 
         makeFloor();
     }
@@ -132,19 +95,44 @@ public class KinectMe extends PApplet {
         }
     }
 
-    private void guitarInteraction() {
-        PVector leftHandPos = kinect.getSkelPos(KinectAnathomy.HAND_LEFT);
-        PVector rightHandPos = kinect.getSkelPos(KinectAnathomy.HAND_RIGHT);
+    private List<DancerData> loadDancerDataCSV() {
+        HashMap<String, HashMap<String, List<String>>> allMoves = CSVTools.readCSV(
+                Paths.get(".\\res\\dance_postures.csv"),
+                CSVFormat.EXCEL, "POSTURE_ID", "LIMB_NAME", "X", "Y", "Z");
 
-        guitar.touched(KinectAnathomy.HAND_LEFT.getSkelId(),
-                leftHandPos,
-                kinect.getHandRadius());
+        List<DancerData> ddl = new ArrayList<>();
 
-        guitar.touched(KinectAnathomy.HAND_RIGHT.getSkelId(),
-                rightHandPos,
-                kinect.getHandRadius());
+        for (String moveKey :
+                allMoves.keySet()) {
 
-        guitar.refresh();
+            HashMap<KinectAnathomy, PVector> data = new HashMap<>();
+            for (String limbKey :
+                    allMoves.get(moveKey).keySet()) {
+
+                float x = Float.parseFloat(allMoves.get(moveKey).get(limbKey).get(0));
+                float y = Float.parseFloat(allMoves.get(moveKey).get(limbKey).get(1));
+                float z = Float.parseFloat(allMoves.get(moveKey).get(limbKey).get(2));
+
+                data.put(KinectAnathomy.getEnumById(limbKey), new PVector(x, y, z));
+            }
+            ddl.add(new DancerData(moveKey, data));
+        }
+        return ddl;
+    }
+
+    @Override
+    public void mouseClicked() {
+        DancerData dd = new DancerData(kinect);
+
+        CSVFormat format;
+        if (printHeader) {
+            format = CSVFormat.EXCEL.withHeader("POSTURE_ID", "LIMB_NAME", "X", "Y", "Z");
+            printHeader = false;
+        } else
+            format = CSVFormat.EXCEL;
+
+        CSVTools.writeCSV(Paths.get(".\\res\\dance_postures.csv"), format, dd.getDancerUUID(), dd.getAnathomyData());
+        System.out.println("DANCE POSTURE SAVED (" + dd.getDancerUUID() + ")");
     }
 
     public void appearEvent(SkeletonData _s) {

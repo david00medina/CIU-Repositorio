@@ -1,4 +1,4 @@
-package kinect;
+package control.kinect;
 
 import kinect4WinSDK.SkeletonData;
 import processing.core.PApplet;
@@ -150,7 +150,7 @@ public class Kinect {
 
         PVector posLabel = skelPositions.get(KinectAnathomy.LABEL);
 
-        String s1 = parent.str(_s.dwTrackingID);
+        String s1 = PApplet.str(_s.dwTrackingID);
 
         if (posLabel != null) {
             parent.pushMatrix();
