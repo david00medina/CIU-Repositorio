@@ -1,6 +1,6 @@
 package object;
 
-import algorithms.Transformation;
+import control.algorithms.Transformation;
 import kinect4WinSDK.SkeletonData;
 import processing.core.*;
 

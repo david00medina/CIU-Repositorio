@@ -1,8 +1,8 @@
 package main;
 
-import kinect.Kinect;
-import kinect.KinectAnathomy;
-import kinect.KinectSelector;
+import control.kinect.Kinect;
+import control.kinect.KinectAnathomy;
+import control.kinect.KinectSelector;
 import kinect4WinSDK.SkeletonData;
 import object.InteractiveVolume;
 import object.instrument.Guitar;

@@ -58,7 +58,7 @@
 	
 	El objetivo de esta experiencia consite en desarrollar una aplicación de realidad aumentada desde la cual se puede interactuar con objetos virtuales en un espacio tridimensional y generar audio a partir de ellos. El modelo de una guitarra eléctrica es elegido en un intento de ilustrar esta funcionalidad. 
 	
-	En la escena se muestra la estructura de un esqueleto humano resultado de un algoritmo de seguimiento del cuerpo que procesa la \textit{Kinect v1.8} obteniendo como resultado la información de los puntos de articulación del mismo \cite{kinect-controller}. 
+	En la escena se muestra la estructura de un esqueleto humano resultado de un algoritmo de seguimiento del cuerpo que procesa la \textit{Kinect v1.8} obteniendo como resultado la información de los puntos de articulación del mismo \cite{control.kinect-controller}.
 	
 	La \textit{Kinect} solo ofrece la posición de cada punto de articulación en el plano XY por lo que es necesario analizar la información que de los sensores IR si queremos conocer la profundidad de cada uno de los puntos de articulación que conforman el esqueleto.
 	
@@ -70,17 +70,17 @@
 		\item Librería \textit{Kinect4WinSDK} \cite{kinect4winsdk}.
 		\item Librería \textit{Sound} \cite{sound-library}.
 		\item Modelo \textit{OBJ} de una guitarra eléctrica \cite{3d-guitar-model}.
-		\item \textit{Kinect v1.8} \cite{kinect-sdk}
+		\item \textit{Kinect v1.8} \cite{control.kinect-sdk}
 	\end{itemize}
 	
 	\section{Método}
 	Las siguientes clases que se definenen en este documente se organizan en los siguientes paquetes:
 	\begin{enumerate}
 		\item main
-		\item kinect
+		\item control.kinect
 		\item soundFX
 		\item object
-		\item algorithms
+		\item control.algorithms
 	\end{enumerate}
 
 	\subsection{Paquete \texttt{main}}
@@ -128,8 +128,8 @@
 	 \lstinputlisting[language=Java, firstline=150, lastline=160]{../src/main/KinectMe.java}
 	
 	
-	\subsection{Paquete \texttt{kinect}}
-	\subsubsection{Clase \texttt{Kinect}}\label{class:kinect}
+	\subsection{Paquete \texttt{control.kinect}}
+	\subsubsection{Clase \texttt{Kinect}}\label{class:control.kinect}
 	Esta clase es la interfaz que permite interactuar con la \textit{Kinect v1.8}. El constructor acepta los siguientes parámetros:
 	\begin{description}
 	\item[parent] Es una referencia a un objeto de la clase principal \texttt{KinectMe}.
@@ -138,49 +138,49 @@
 	\item[skeletonRGB] Se trata de un vector que ajusta el color del esqueleto que se muestra por pantalla.
 	\end{description}
 	
-	\lstinputlisting[language=Java, firstline=30, lastline=44]{../src/kinect/Kinect.java}
+	\lstinputlisting[language=Java, firstline=30, lastline=44]{../src/control.kinect/Kinect.java}
 	
 	El método \texttt{refresh()} permite refrescar las imágenes que se muestran por pantalla así como visualizar el esqueleto detectado por la \textit{Kinect}. El primer parámetro de este método es un selector de la clase \texttt{KinectSelector} permite elegir entre las diferentes opciones de visualización. El segundo parámetro, es una variable booleana que permite visualizar por pantalla las imágenes obtenidas de la \textit{Kinect} cuando se asigna a \texttt{true}.
 	
-	\lstinputlisting[language=Java, firstline=75, lastline=117]{../src/kinect/Kinect.java}
+	\lstinputlisting[language=Java, firstline=75, lastline=117]{../src/control.kinect/Kinect.java}
 	
 	El método \texttt{bodyTracking()} muestra por pantalla todos los esqueletos detectados por la \textit{Kinect} con cada llamada al método \texttt{drawSkeleton()}. Este último, sondea todos los puntos de articulación que conforman el esqueleto detectado e imprime por pantalla cada una de las partes que conforman el esqueleto.
 	
-	\lstinputlisting[language=Java, firstline=119, lastline=144]{../src/kinect/Kinect.java}
+	\lstinputlisting[language=Java, firstline=119, lastline=144]{../src/control.kinect/Kinect.java}
 	
 	Los puntos son sondeados con la llamada al método \texttt{collectPoints()}.
 	
-	\lstinputlisting[language=Java, firstline=164, lastline=170]{../src/kinect/Kinect.java}
+	\lstinputlisting[language=Java, firstline=164, lastline=170]{../src/control.kinect/Kinect.java}
 	
 	Cada una de las partes que componen el esqueleto son construidas llamando al método correspondiente. Cada método realiza una llamada a \texttt{DrawBone()} con dos selectores de puntos de articulación (\texttt{KinectAnathomy}) como argumentos.
 	
-	\lstinputlisting[language=Java, firstline=172, lastline=229]{../src/kinect/Kinect.java}
+	\lstinputlisting[language=Java, firstline=172, lastline=229]{../src/control.kinect/Kinect.java}
 	
 	\texttt{DrawBone()} toma dos selectores de articulación y pinta una línea entre esos dos puntos originando, de este modo, una articulación. 
 	
 	En el caso de pintar el punto de articulación de las manos, se comprueba si el radio es mayor que 0. Si es así, se pinta una esfera del radio que se ha especificado. 
 	
-	\lstinputlisting[language=Java, firstline=231, lastline=262]{../src/kinect/Kinect.java}
+	\lstinputlisting[language=Java, firstline=231, lastline=262]{../src/control.kinect/Kinect.java}
 	
 	La gestión de los eventos mencionados al final de la sección \ref{class:kinectme} son llevado a cabo por los métodos \texttt{appearEvent(), disappearEvent()} y \texttt{moveEvent()}.
 	
-	\lstinputlisting[language=Java, firstline=264, lastline=295]{../src/kinect/Kinect.java}
+	\lstinputlisting[language=Java, firstline=264, lastline=295]{../src/control.kinect/Kinect.java}
 	
 	
 	\subsubsection{Enumerado \texttt{KinectAnathomy}}
 	Este enumerado identifica los diferentes puntos de articulación detectados por la \textit{Kinect v1.8}.
 	
-	\lstinputlisting[language=Java, firstline=11, lastline=48]{../src/kinect/KinectAnathomy.java}
+	\lstinputlisting[language=Java, firstline=11, lastline=48]{../src/control.kinect/KinectAnathomy.java}
 	
 	Las coordenadas de cada punto de articulación --incluida la profundidad-- son calculadas en el método \texttt{getJointPos()}.
 	
-	\lstinputlisting[language=Java, firstline=50, lastline=58]{../src/kinect/KinectAnathomy.java}
+	\lstinputlisting[language=Java, firstline=50, lastline=58]{../src/control.kinect/KinectAnathomy.java}
 	
 	El cálculo de la profundidad se obtiene a partir de la imagen en blanco y negro que devuelve la librería \texttt{Kinect4WinSDK} tras llamar a la primitiva \texttt{GetDepth()}.
 	
 	Para establecer la profundidad de cada punto de articulación se analiza cada uno de los píxeles de la imagen devuelta por \texttt{GetDepth()} y se toma el byte menos significativo. Posteriormente, se comprueba que el valor del byte se encuentre en el rango umbral del intervalo $\left[ 100, 250\right]$. El rango de profundidad se establece en el intervalo $\left[ 0, 360\right]$ y se asigna este valor al punto de articulación correspondiente.
 	
-	\lstinputlisting[language=Java, firstline=60, lastline=82]{../src/kinect/KinectAnathomy.java}
+	\lstinputlisting[language=Java, firstline=60, lastline=82]{../src/control.kinect/KinectAnathomy.java}
 	
 	
 	\subsubsection{Enumerado \texttt{KinectSelector}}
@@ -192,7 +192,7 @@
 	\item NONE
 	\end{itemize}
 	
-	\lstinputlisting[language=Java, firstline=3, lastline=8]{../src/kinect/KinectSelector.java}
+	\lstinputlisting[language=Java, firstline=3, lastline=8]{../src/control.kinect/KinectSelector.java}
 	
 	
 	\subsection{Paquete \texttt{object}}

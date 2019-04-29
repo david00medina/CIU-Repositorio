@@ -84,7 +84,7 @@ public enum KinectAnathomy {
     public static KinectAnathomy getEnumById(String id) {
         for (KinectAnathomy ka:
                 KinectAnathomy.values()) {
-            if (ka.getId().equals(id)) return ka;
+            if (ka.getId().equalsIgnoreCase(id)) return ka;
         }
         return null;
     }

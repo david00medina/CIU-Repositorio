@@ -1,4 +1,4 @@
-package kinect;
+package control.kinect;
 
 public enum KinectSelector {
     RGB,

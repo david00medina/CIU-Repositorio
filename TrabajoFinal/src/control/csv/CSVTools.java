@@ -1,7 +1,6 @@
 package control.csv;
 
 import control.kinect.KinectAnathomy;
-import model.DancerData;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVPrinter;
 import org.apache.commons.csv.CSVRecord;
@@ -19,42 +18,43 @@ public class CSVTools {
     public static void writeCSV(Path path, CSVFormat format, String uuid, HashMap<KinectAnathomy, PVector> dd) {
         try {
             CSVPrinter p = new CSVPrinter(new FileWriter(path.toString(), true), format);
+
+            List<Object> points = new ArrayList<>();
+            points.add(uuid);
             for (KinectAnathomy ka :
                     KinectAnathomy.values()) {
-                if (ka.equals(KinectAnathomy.LABEL) || ka.equals(KinectAnathomy.NOT_TRACKED)) continue;
-
-                PVector v = dd.get(ka);
-                if (v == null) p.printRecord(uuid, ka.getId(), "", "", "");
-
-                p.printRecord(uuid, ka.getId(), v.x, v.y, v.z);
+                if (!KinectAnathomy.NOT_TRACKED.equals(ka) && !KinectAnathomy.LABEL.equals(ka)) {
+                    PVector v = dd.get(ka);
+                    points.add(v.x);
+                    points.add(v.y);
+                    points.add(v.z);
+                }
             }
+
+            p.printRecord(points);
             p.close(true);
+
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
-    public static HashMap<String, HashMap<String, List<String>>> readCSV(Path path, CSVFormat format, String... headers) {
-        HashMap<String, HashMap<String, List<String>>> result = new HashMap<>();
+    public static HashMap<String, List<String>> readCSV(Path path, CSVFormat format, String... headers) {
+        HashMap<String, List<String>> result = new HashMap<>();
         try {
             Iterable<CSVRecord> records = format.withFirstRecordAsHeader().parse(new FileReader(path.toString()));
-            HashMap<String, List<String>> dict = new HashMap<>();
             for (CSVRecord record :
                     records) {
 
-                List<String> data = new ArrayList<>();
+                List<String> values = new ArrayList<>();
 
-                if (!result.containsKey(record.get(headers[0]))) dict = new HashMap<>();
-
-                for (String header:
+                for (String header :
                         headers) {
-                    if (header.equals(headers[0]) || header.equals(headers[1])) continue;
-
-                    data.add(record.get(header));
-                    dict.put(record.get(headers[1]), data);
+                    values.add(record.get(header));
                 }
-                result.put(record.get(headers[0]), dict);
+                result.put(record.get(headers[0]), values);
             }
+            return result;
         } catch (IOException e) {
             e.printStackTrace();
         }

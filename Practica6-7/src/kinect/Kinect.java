@@ -1,4 +1,4 @@
-package kinect;
+package control.kinect;
 
 import kinect4WinSDK.SkeletonData;
 import processing.core.PApplet;

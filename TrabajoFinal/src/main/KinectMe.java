@@ -20,6 +20,7 @@ public class KinectMe extends PApplet {
     private static final int SCALE = 60;
     private static final int COLS = 60;
     private static final int ROWS = 60;
+    private static final String DANCE_POSTURES_CSV_FILE = ".\\res\\dance_postures.csv";
 
     private Kinect kinect;
     private PShape floor;
@@ -41,7 +42,6 @@ public class KinectMe extends PApplet {
         kinect = new Kinect(this, null, null, null);
 //        control.kinect.setHandRadius(0);
 
-        loadDancerDataCSV();
         createFloor();
     }
 
@@ -95,44 +95,75 @@ public class KinectMe extends PApplet {
         }
     }
 
-    private List<DancerData> loadDancerDataCSV() {
-        HashMap<String, HashMap<String, List<String>>> allMoves = CSVTools.readCSV(
-                Paths.get(".\\res\\dance_postures.csv"),
-                CSVFormat.EXCEL, "POSTURE_ID", "LIMB_NAME", "X", "Y", "Z");
+    private List<DancerData> readDancerDataFromCSV() {
+        List<String> headers = generateHeaders(KinectAnathomy.NOT_TRACKED, KinectAnathomy.LABEL);
+
+        HashMap<String, List<String>> allMoves = CSVTools.readCSV(
+                Paths.get(DANCE_POSTURES_CSV_FILE),
+                CSVFormat.EXCEL,
+                headers.toArray(new String[headers.size()]));
 
         List<DancerData> ddl = new ArrayList<>();
 
-        for (String moveKey :
+        for (String key :
                 allMoves.keySet()) {
 
+            int i = 0;
+            List<String> values = allMoves.get(key);
+            PVector v = new PVector();
             HashMap<KinectAnathomy, PVector> data = new HashMap<>();
-            for (String limbKey :
-                    allMoves.get(moveKey).keySet()) {
 
-                float x = Float.parseFloat(allMoves.get(moveKey).get(limbKey).get(0));
-                float y = Float.parseFloat(allMoves.get(moveKey).get(limbKey).get(1));
-                float z = Float.parseFloat(allMoves.get(moveKey).get(limbKey).get(2));
-
-                data.put(KinectAnathomy.getEnumById(limbKey), new PVector(x, y, z));
+            for (String header :
+                    headers) {
+                if (header.endsWith("X")) {
+                    v = new PVector();
+                    v.x = Float.parseFloat(values.get(i));
+                } else if (header.endsWith("Y")) {
+                    v.y = Float.parseFloat(values.get(i));
+                } else if (header.endsWith("Z")) {
+                    v.z = Float.parseFloat(values.get(i));
+                    data.put(KinectAnathomy.getEnumById(header.split("_Z")[0]), v);
+                }
+                i += 1;
             }
-            ddl.add(new DancerData(moveKey, data));
+            ddl.add(new DancerData(key, data));
         }
+
         return ddl;
     }
 
     @Override
-    public void mouseClicked() {
+    public void mouseClicked() {        readDancerDataFromCSV();
+    }
+
+    private void writeDancerDataToCSV() {
         DancerData dd = new DancerData(kinect);
 
+        List<String> headers = generateHeaders(KinectAnathomy.LABEL, KinectAnathomy.NOT_TRACKED);
         CSVFormat format;
         if (printHeader) {
-            format = CSVFormat.EXCEL.withHeader("POSTURE_ID", "LIMB_NAME", "X", "Y", "Z");
+            format = CSVFormat.EXCEL.withHeader(headers.toArray(new String[headers.size()]));
             printHeader = false;
         } else
             format = CSVFormat.EXCEL;
 
-        CSVTools.writeCSV(Paths.get(".\\res\\dance_postures.csv"), format, dd.getDancerUUID(), dd.getAnathomyData());
+
+        CSVTools.writeCSV(Paths.get(DANCE_POSTURES_CSV_FILE), format, dd.getDancerUUID(), dd.getAnathomyData());
         System.out.println("DANCE POSTURE SAVED (" + dd.getDancerUUID() + ")");
+    }
+
+    private List<String> generateHeaders(KinectAnathomy label, KinectAnathomy notTracked) {
+        List<String> headers = new ArrayList<>();
+        headers.add("ID");
+        for (KinectAnathomy ka :
+                KinectAnathomy.values()) {
+            if (!label.equals(ka) && !notTracked.equals(ka)) {
+                headers.add(ka.getId() + "_X");
+                headers.add(ka.getId() + "_Y");
+                headers.add(ka.getId() + "_Z");
+            }
+        }
+        return headers;
     }
 
     public void appearEvent(SkeletonData _s) {
