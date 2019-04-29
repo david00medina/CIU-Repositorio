@@ -133,7 +133,8 @@ public class KinectMe extends PApplet {
     }
 
     @Override
-    public void mouseClicked() {        readDancerDataFromCSV();
+    public void mouseClicked() {
+        readDancerDataFromCSV();
     }
 
     private void writeDancerDataToCSV() {
