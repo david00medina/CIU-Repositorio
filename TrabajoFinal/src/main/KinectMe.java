@@ -1,5 +1,6 @@
 package main;
 
+import control.algorithms.Statistics;
 import control.csv.CSVTools;
 import control.kinect.Kinect;
 import control.kinect.KinectAnathomy;
@@ -26,6 +27,7 @@ public class KinectMe extends PApplet {
     private PShape floor;
 
     private boolean printHeader = true;
+    private List<DancerData> ddl = readDancerDataFromCSV();
 
     @Override
     public void settings() {
@@ -40,7 +42,7 @@ public class KinectMe extends PApplet {
         stroke(255);
 
         kinect = new Kinect(this, null, null, null);
-//        control.kinect.setHandRadius(0);
+        kinect.setHandRadius(0);
 
         createFloor();
     }
@@ -49,14 +51,33 @@ public class KinectMe extends PApplet {
     public void draw() {
         background(0);
 
-        setCamera();
+        //setCamera();
 
         kinect.doSkeleton(true);
         kinect.refresh(KinectSelector.NONE, true);
 
+
+        DancerData dd1 = getDancerByUUID("8d611f91-ef19-4265-a3b6-99cb41010784");
+        DancerData dd2 = new DancerData(this, kinect);
+
+        if (dd1 != null || dd2 != null) {
+            dd1.printDancer();
+            dd2.printDancer();
+        }
+
+        System.out.println(Statistics.correlate(dd1, dd2));
+
         lights();
 
         makeFloor();
+    }
+
+    private DancerData getDancerByUUID(String uuid) {
+        for (DancerData dd :
+                ddl) {
+            if (dd.getDancerUUID().equals(uuid)) return dd;
+        }
+        return null;
     }
 
     private void setCamera() {
@@ -126,7 +147,7 @@ public class KinectMe extends PApplet {
                 }
                 i += 1;
             }
-            ddl.add(new DancerData(key, data));
+            ddl.add(new DancerData(this, key, data));
         }
 
         return ddl;
@@ -138,7 +159,7 @@ public class KinectMe extends PApplet {
     }
 
     private void writeDancerDataToCSV() {
-        DancerData dd = new DancerData(kinect);
+        DancerData dd = new DancerData(this, kinect);
 
         List<String> headers = generateHeaders(KinectAnathomy.LABEL, KinectAnathomy.NOT_TRACKED);
         CSVFormat format;
