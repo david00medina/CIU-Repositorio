@@ -1,4 +1,4 @@
-package main;
+package gui;
 
 import control.algorithms.Statistics;
 import control.csv.CSVTools;
@@ -6,7 +6,8 @@ import control.kinect.Kinect;
 import control.kinect.KinectAnathomy;
 import control.kinect.KinectSelector;
 import kinect4WinSDK.SkeletonData;
-import model.DancerData;
+import model.postures.DancerData;
+import model.sound.Song;
 import org.apache.commons.csv.CSVFormat;
 import processing.core.PApplet;
 import processing.core.PShape;
@@ -22,6 +23,9 @@ public class KinectMe extends PApplet {
     private static final int COLS = 60;
     private static final int ROWS = 60;
     private static final String DANCE_POSTURES_CSV_FILE = ".\\res\\dance_postures.csv";
+    private Song song;
+    private MainScreen screen;
+    private boolean gameScreen = false;
 
     private Kinect kinect;
     private PShape floor;
@@ -44,7 +48,8 @@ public class KinectMe extends PApplet {
         kinect = new Kinect(this, null, null, null);
         kinect.setHandRadius(0);
 
-        createFloor();
+        screen = new MainScreen(this, ".\\res\\songs");
+//        createFloor();
     }
 
     @Override
@@ -52,24 +57,33 @@ public class KinectMe extends PApplet {
         background(0);
 
         //setCamera();
-
-        kinect.doSkeleton(true);
-        kinect.refresh(KinectSelector.NONE, true);
-
+        if (gameScreen) {
+            kinect.doSkeleton(true);
+            kinect.refresh(KinectSelector.NONE, true);
+        }
 
         DancerData dd1 = getDancerByUUID("8d611f91-ef19-4265-a3b6-99cb41010784");
         DancerData dd2 = new DancerData(this, kinect);
 
-        if (dd1 != null || dd2 != null) {
+        /*if (dd1 != null || dd2 != null) {
+            pushStyle();
+            stroke(255);
+            rect(0,0,180,170);
+            pushMatrix();
+            translate(-80, -80, 0);
+            scale(0.5f);
             dd1.printDancer();
-            dd2.printDancer();
-        }
+            popMatrix();
+            popStyle();
+//            dd2.printDancer();
+        }*/
 
-        System.out.println(Statistics.correlate(dd1, dd2));
+//        System.out.println(Statistics.correlate(dd1, dd2));
+        System.out.println(Statistics.totalError(this, dd2, dd1));
 
         lights();
-
-        makeFloor();
+        if (!gameScreen) screen.show();
+//        makeFloor();
     }
 
     private DancerData getDancerByUUID(String uuid) {
@@ -97,7 +111,7 @@ public class KinectMe extends PApplet {
     private void makeFloor() {
         pushMatrix();
         translate(-ROWS * SCALE / 2.f, 400, -COLS * SCALE /2.f);
-        shape(floor);
+//        shape(floor);
         popMatrix();
     }
 
@@ -155,6 +169,13 @@ public class KinectMe extends PApplet {
 
     @Override
     public void mouseClicked() {
+        if (screen.mouseOverButtonJugar()) {
+            gameScreen = true;
+        } else if (screen.mouseOverButtonPrevious()) {
+            screen.setPreviousSong();
+        } else if (screen.mouseOverButtonNext()) {
+            screen.setNextSong();
+        }
         readDancerDataFromCSV();
     }
 

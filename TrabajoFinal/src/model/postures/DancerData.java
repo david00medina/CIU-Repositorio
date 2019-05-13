@@ -1,4 +1,4 @@
-package model;
+package model.postures;
 
 import control.kinect.Kinect;
 import control.kinect.KinectAnathomy;
@@ -12,6 +12,12 @@ public class DancerData {
     private PApplet parent;
     private String dancerUUID;
     private HashMap<KinectAnathomy, PVector> anathomyData;
+
+    public DancerData(PApplet parent) {
+        this.parent = parent;
+        this.anathomyData = new HashMap<>();
+        dancerUUID = UUID.randomUUID().toString();
+    }
 
     public DancerData(PApplet parent, String dancerUUID, HashMap<KinectAnathomy, PVector> anathomyData) {
         this.parent = parent;
