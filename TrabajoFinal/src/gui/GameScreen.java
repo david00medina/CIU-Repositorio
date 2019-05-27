@@ -7,33 +7,63 @@ import control.kinect.KinectAnathomy;
 import control.kinect.KinectSelector;
 import kinect4WinSDK.SkeletonData;
 import model.postures.DancerData;
+import model.sound.Song;
 import processing.core.PApplet;
+import processing.core.PImage;
 import processing.core.PShape;
+import processing.sound.SoundFile;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Random;
 
 public class GameScreen extends Screen
 {
     private static final int SCALE = 60;
     private static final int COLS = 60;
     private static final int ROWS = 60;
+    private static final int THRESHOLD = 2000;
+    private final int STEPS = 60;        // Cuantos cuadros tarda el vuelo del numero
+    private final int STEPS_BIGGER = 30; // Cuantos cuadros dura el agrandamiento de la puntuacion total
+    private static String BASE_POS_DIR;
 
     private Kinect kinect;
     private PShape floor;
+    private Song song;
 
-    private boolean printHeader = false;
+    private long timeBegin = 0;
+    private int currentPosture;
+
+    private Boolean initialCount = false, startCount = false;
+    private int counter = 3, flyingCounter = 0, biggerCounter = 0, time = 0, pausedTime = 0, numOfPostures = 0, totalScore = 0;
+    private float xStep, yStep;
+
+    private Boolean pause = false;
+
+    private SoundFile start_beep, countdown_beep;
 
     private List<DancerData> ddl;
 
-    GameScreen(PApplet parent, String csvPath) {
-        super(parent, csvPath);
+    GameScreen(PApplet parent, HashMap<UISelector, PImage> UIResources, String countdownBeep, String startBeep,
+               String csvPath, String baseImgDir) {
+        super(parent, UIResources, csvPath);
 
         kinect = new Kinect(this.parent, null, null, null);
         kinect.setHandRadius(0);
 
+        BASE_POS_DIR = baseImgDir;
+
         createFloor();
 
         preprocessDancerData();
+
+        currentPosture = new Random().nextInt(ddl.size());
+
+        yStep = (this.parent.height * 0.85f - this.parent.height / 20.f) / STEPS;
+        xStep = (this.parent.width - this.parent.width / 8.f - this.parent.width / 2.f) / STEPS;
+
+        countdown_beep = new SoundFile(this.parent, countdownBeep);
+        start_beep = new SoundFile(this.parent, startBeep);
     }
 
     private void preprocessDancerData() {
@@ -55,9 +85,159 @@ public class GameScreen extends Screen
         DancerData liveDancer = new DancerData(parent, kinect);
         Transformation.translateToOrigin(parent, liveDancer, KinectAnathomy.SPINE);
 
-        DancerData ddCSV = getDancerDataByUUID("37f46031-9e19-4ac5-afe0-5d99974faf8e");
+        DancerData ddCSV = ddl.get(currentPosture);
 
-        System.out.println(Statistics.euclideanMSE(parent, liveDancer, ddCSV));
+        if (initialCount)
+        {
+            if (startCount)
+            {
+                startCount = false;
+                time = parent.millis();
+            }
+            if (parent.millis() - time >= 1000)
+            {
+                time = parent.millis();//also update the stored time
+
+                if (counter <= 3) while(parent.millis() - time < 1000) {}
+
+                if (counter >= 0)
+                {
+                    if (counter == 0)
+                        start_beep.play();
+                    else
+                        countdown_beep.play();
+                    parent.imageMode(parent.CENTER);
+                    parent.image(UIResources.get(UISelector.getSelectorFromID(counter--)), parent.width / 2.f, parent.height / 2.f);
+                }
+                else
+                {
+                    initialCount = false;
+                    counter = 3;
+                    this.song.play();
+                }
+            }
+            return;
+        }
+
+        if (counter == -1)
+        {
+            if (flyingCounter == STEPS)
+            {
+                flyingCounter = 0;
+                biggerCounter = 1;
+                totalScore += getScore(liveDancer, ddCSV);
+            }
+            else if (biggerCounter == 0)
+                ++flyingCounter;
+            else if (biggerCounter == STEPS_BIGGER)
+            {
+                biggerCounter = 0;
+                counter = 3;
+                time = parent.millis();
+                currentPosture = new Random().nextInt(ddl.size());
+                System.out.println("Siguiente postura");
+            }
+            else
+                ++biggerCounter;
+        }
+        else
+        {
+            parent.imageMode(parent.CENTER);
+            if (counter > 0) {
+                PImage img = UIResources.get(UISelector.getSelectorFromID(counter));
+                parent.image(img, parent.width / 2.f, parent.height / 10.f, img.width / 4, img.height / 4);
+            } else if (counter == 0) {
+                PImage img = UIResources.get(UISelector.NOW);
+                parent.image(img, parent.width / 2.f, parent.height / 10.f);
+            }
+            if (!pause && parent.millis() - time - pausedTime >= 1000)
+            {
+                if (pausedTime > 0)
+                    pausedTime = 0;
+
+                time = parent.millis();//also update the stored time
+                --counter;
+            }
+        }
+        // Mostramos el moment score
+        parent.ellipseMode(parent.CENTER);
+        parent.stroke(255, 50, 50);
+        parent.strokeWeight(3);
+        parent.fill(0);
+        parent.ellipse(parent.width / 2.f, parent.height * .86f, parent.width / 4.8f, parent.height / 10.f);
+
+        parent.fill(255, 50, 50);
+        parent.textSize(parent.height / 15.72f);
+        parent.textAlign(parent.CENTER, parent.CENTER);
+        if (biggerCounter == 0)
+        {
+            if (flyingCounter > 0)
+                parent.text(getScore(liveDancer, ddCSV), parent.width / 2.f + xStep * (flyingCounter - 1), parent.height * 0.85f - yStep * (flyingCounter - 1));
+            else
+                parent.text(getScore(liveDancer, ddCSV), parent.width / 2f, parent.height * 0.85f);
+        }
+
+        parent.imageMode(parent.CORNER);
+
+        // Mostramos los botones "atras" y "pausa"
+        if (mouseOverButtonBack())
+        {
+            if (parent.mousePressed)
+                parent.image(UIResources.get(UISelector.BACK_PRESSED), parent.width / 30, parent.height / 16);
+            else
+                parent.image(UIResources.get(UISelector.BACK_OVER), parent.width / 30, parent.height / 16);
+        }
+        else
+            parent.image(UIResources.get(UISelector.BACK), parent.width / 30, parent.height / 16);
+
+        if (mouseOverButtonPause())
+        {
+            if (parent.mousePressed)
+                parent.image(UIResources.get(UISelector.PAUSE_PRESSED), parent.width / 10, parent.height / 16);
+            else
+                parent.image(UIResources.get(UISelector.PAUSE_OVER), parent.width / 10, parent.height / 16);
+        }
+        else
+            parent.image(UIResources.get(UISelector.PAUSE), parent.width / 10, parent.height / 16);
+
+
+        // Mostramos el tiempo restante de la cancion
+        parent.imageMode(parent.CENTER);
+        parent.image(UIResources.get(UISelector.CHRONO), parent.width / 30, parent.height - parent.height / 13);
+        parent.fill(255, 150, 0);
+        parent.textSize(parent.height / 15.72f);
+        parent.textAlign(parent.LEFT, parent.DOWN);
+        parent.text(song.timeLeft(), parent.width / 16.f, parent.height - parent.height / 20.f); // Aqui cambiar scr a la variable de MainScreen
+
+        // Mostramos el score total
+        parent.fill(0);
+        parent.rectMode(parent.CENTER);
+        parent.stroke(0, 255, 90);
+        if (biggerCounter == 0)
+            parent.rect(parent.width - parent.width / 8.f, parent.height / 17.5f, parent.width / 5.f, parent.height / 15.f);
+        else
+            parent.rect(parent.width - parent.width / 8.f, parent.height / 17.5f, parent.width / 5 * 1.2f, parent.height / 15.f * 1.2f);
+
+        parent.fill(0, 255, 90);
+        parent.textAlign(parent.CENTER, parent.CENTER);
+
+        if (biggerCounter == 0)
+            parent.textSize(parent.height / 15.72f);
+        else
+            parent.textSize(parent.height / 15.72f * 1.2f);
+        parent.text(totalScore, parent.width - parent.width / 8f, parent.height / 20f);
+
+
+        // Mostramos la postura y su rama
+        parent.imageMode(parent.CORNER);
+        PImage img = parent.loadImage(BASE_POS_DIR + ddl.get(currentPosture).getDancerUUID() + ".png");
+        img.resize(parent.width / 4, 0);
+        parent.image(img, parent.width - img.width, parent.height - img.height);
+        parent.stroke(255, 100, 255);
+        parent.line(parent.width - img.width, parent.height, parent.width - img.width, parent.height - img.height);
+        parent.line(parent.width - img.width, parent.height - img.height, parent.width, parent.height - img.height);
+
+
         makeFloor();
     }
 
@@ -67,6 +247,23 @@ public class GameScreen extends Screen
             if (dd.getDancerUUID().equals(uuid)) return dd;
         }
         return null;
+    }
+
+    private int getScore(DancerData ddK, DancerData ddCSV) {
+        double err = Statistics.euclideanMSE(parent, ddK, ddCSV);
+        if (err > 2000 || ddCSV.getAnathomyData().size() == 0 || ddK.getAnathomyData().size() == 0) return 0;
+        return (int) Math.abs(err - THRESHOLD);
+    }
+
+    public Boolean mouseOverButtonBack()
+    {
+        return parent.mouseX >= parent.width / 30 && parent.mouseX <= parent.width / 30 + UIResources.get(UISelector.BACK).width
+                && parent.mouseY >= parent.height / 16 && parent.mouseY <= parent.height / 16 + UIResources.get(UISelector.BACK).height;
+    }
+    public Boolean mouseOverButtonPause()
+    {
+        return parent.mouseX >= parent.width / 10 && parent.mouseX <= parent.width / 10 + UIResources.get(UISelector.PAUSE).width
+                && parent.mouseY >= parent.height / 16 && parent.mouseY <= parent.height / 16 + UIResources.get(UISelector.PAUSE).height;
     }
 
     private void makeFloor() {
@@ -88,6 +285,39 @@ public class GameScreen extends Screen
                 floor.vertex(x * SCALE, 0, (z+1) * SCALE);
             }
             floor.endShape();
+        }
+    }
+
+    void setSong(Song song) {
+        this.song = song;
+    }
+
+    Song getSong() {
+        return song;
+    }
+
+    void setInitialCount()
+    {
+        initialCount = true;
+        startCount = true;
+        counter = 3;
+        totalScore = 0;
+        pause = false;
+        pausedTime = 0;
+    }
+
+    void pause()
+    {
+        pause = !pause;
+        if (pause)
+        {
+            pausedTime = parent.millis();
+            song.pause(); // Aqui cambiar scr a la variable de MainScreen
+        }
+        else
+        {
+            pausedTime = parent.millis() - pausedTime;
+            song.play(); // Aqui cambiar scr a la variable de MainScreen
         }
     }
 
