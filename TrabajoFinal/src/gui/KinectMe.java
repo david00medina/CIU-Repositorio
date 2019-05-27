@@ -9,15 +9,18 @@ import java.util.HashMap;
 public class KinectMe extends PApplet {
     private static final String SOUND_DIR = ".\\res\\sound";
     private static final String POSTURES_CSV = ".\\res\\data\\dance_postures.csv";
-    private static final String RANKING_CSV = ".\\res\\data\\ranking.csv";
+    private static final String RANKING_CSV = "..\\res\\data\\ranking.csv";
     private static final String BASE_IMG_DIR = ".\\res\\images";
 
     private MainScreen screen;
     private GameScreen gameScreen;
     private PreludeScreen preludeScreen;
+    private RankingScreen rankingScreen;
 
     private boolean isGameScreen = false;
-    private boolean isPrelude = false;
+    private boolean isPreludeScreen = false;
+    private boolean isRankingScreen = false;
+
     private HashMap<UISelector, PImage> UIResources;
 
     @Override
@@ -40,8 +43,8 @@ public class KinectMe extends PApplet {
         gameScreen = new GameScreen(this, UIResources, SOUND_DIR + "\\fx\\count_beep.wav",
                 SOUND_DIR + "\\fx\\start_beep.wav", POSTURES_CSV, BASE_IMG_DIR + "\\postures\\");
         gameScreen.setInitialCount();
-        preludeScreen = new PreludeScreen(this, UIResources, RANKING_CSV, BASE_IMG_DIR + "\\masks\\");
-
+        preludeScreen = new PreludeScreen(this, UIResources, BASE_IMG_DIR + "\\masks\\");
+        rankingScreen = new RankingScreen(this, UIResources, RANKING_CSV);
     }
 
     private void initializeUI() {
@@ -72,6 +75,10 @@ public class KinectMe extends PApplet {
         UIResources.get(UISelector.PAUSE_OVER).resize(0, UIResources.get(UISelector.PAUSE).height);
         UIResources.get(UISelector.PAUSE_PRESSED).resize(0, UIResources.get(UISelector.PAUSE).height);
         UIResources.get(UISelector.CHRONO).resize(0, height / 15);
+        UIResources.get(UISelector.CROWN).resize(0,50);
+        UIResources.get(UISelector.GOLD_MEDAL).resize(0,20);
+        UIResources.get(UISelector.SILVER_MEDAL).resize(0,20);
+        UIResources.get(UISelector.BRONZE_MEDAL).resize(0,20);
     }
 
     @Override
@@ -81,46 +88,61 @@ public class KinectMe extends PApplet {
         this.clear();
         if (isGameScreen) {
             gameScreen.show();
-            lights();
-        } else if (isPrelude) {
+            if ("00:00".equals(gameScreen.getSong().timeLeft())) {
+                isGameScreen = false;
+                isRankingScreen = true;
+                rankingScreen.loadScore(preludeScreen.getPlayerName(), gameScreen.getScore());
+            }
+        } else if (isPreludeScreen) {
             preludeScreen.show();
+        } else if (isRankingScreen) {
+            rankingScreen.show();
         } else {
             screen.show();
         }
     }
 
     @Override
-    public void mouseClicked() {
-        if (!isGameScreen && !isPrelude && screen.mouseOverButtonJugar()) {
-            isPrelude = true;
-        } else if (!isGameScreen && !isPrelude && screen.mouseOverButtonPrevious()) {
+    public void mouseReleased() {
+        if (!isGameScreen && !isPreludeScreen && !isRankingScreen && screen.mouseOverButtonJugar()) {
+            isPreludeScreen = true;
+        } else if (!isGameScreen && !isPreludeScreen && !isRankingScreen && screen.mouseOverButtonPrevious()) {
             screen.setPreviousSong();
-        } else if (!isGameScreen && !isPrelude && screen.mouseOverButtonNext()) {
+        } else if (!isGameScreen && !isPreludeScreen && !isRankingScreen && screen.mouseOverButtonNext()) {
             screen.setNextSong();
-        } else if (!isGameScreen && isPrelude && preludeScreen.mouseOverPlay()) {
+        } else if (!isGameScreen && isPreludeScreen && !isRankingScreen && preludeScreen.mouseOverPlay()) {
             isGameScreen = true;
+            isPreludeScreen = false;
             screen.getCurrentSong().stop();
             gameScreen.setSong(screen.getCurrentSong());
-        } else if (isPrelude && preludeScreen.mouseOverBack()) {
-            isPrelude = false;
+            gameScreen.setMask(preludeScreen.getSelectedMask());
+        } else if (!isGameScreen && isPreludeScreen && !isRankingScreen && preludeScreen.mouseOverBack()) {
+            isPreludeScreen = false;
             screen.getCurrentSong().stop();
             screen.getCurrentSong().play();
-        } else if (isGameScreen && !isPrelude && gameScreen.mouseOverButtonPause()) {
+        } else if (isGameScreen && !isPreludeScreen && !isRankingScreen && gameScreen.mouseOverButtonPause()) {
             gameScreen.pause();
-        } else if (isGameScreen && gameScreen.mouseOverButtonBack()) {
+        } else if (isGameScreen && !isPreludeScreen && !isRankingScreen && gameScreen.mouseOverButtonBack()) {
             screen.getCurrentSong().stop();
             screen.getCurrentSong().play();
             isGameScreen = false;
+            isPreludeScreen = false;
             gameScreen.setInitialCount();
-        } else if (!isGameScreen && isPrelude) {
+        } else if (!isGameScreen && isPreludeScreen && !isRankingScreen) {
             preludeScreen.mouseOverLeft();
             preludeScreen.mouseOverRight();
+        } else if (!isGameScreen && !isPreludeScreen && isRankingScreen && rankingScreen.mouseOverContinue()) {
+            isRankingScreen = false;
+            rankingScreen.reset();
+            gameScreen.setInitialCount();
+            screen.getCurrentSong().stop();
+            screen.getCurrentSong().play();
         }
     }
 
     @Override
     public void keyPressed() {
-        if (!isGameScreen && isPrelude) {
+        if (!isGameScreen && isPreludeScreen) {
             preludeScreen.keyboardTextArea();
         }
     }

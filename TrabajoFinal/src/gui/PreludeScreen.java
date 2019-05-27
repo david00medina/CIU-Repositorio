@@ -2,8 +2,6 @@ package gui;
 
 import processing.core.PApplet;
 import processing.core.PImage;
-import processing.data.Table;
-import processing.data.TableRow;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -14,15 +12,10 @@ public class PreludeScreen extends Screen {
     private PApplet parent;
     private String playerName;
 
-    private boolean boolScreenSelect = true;
-    private boolean boolScreenRanking = false;
     private ArrayList<PImage> mask = new ArrayList<PImage>();
     private int maskSelected = 0;
 
-    private Table ranking;
-    private PImage crown, gold, silver, bronze, titulo;
-
-    PreludeScreen(PApplet parent, HashMap<UISelector, PImage> uiResources, String rankingPath, String maskPath) {
+    PreludeScreen(PApplet parent, HashMap<UISelector, PImage> uiResources, String maskPath) {
         super(parent, uiResources);
         this.parent = parent;
 
@@ -30,84 +23,27 @@ public class PreludeScreen extends Screen {
 
         playerName = "Jugador1";
         loadMask();
-        ranking = this.parent.loadTable(rankingPath,"header");
-
-        loadImgRanking();
-    }
-
-    void loadImgRanking(){
-        crown = UIResources.get(UISelector.CROWN);
-        crown.resize(0,50);
-        gold = UIResources.get(UISelector.GOLD_MEDAL);
-        gold.resize(0,20);
-        silver = UIResources.get(UISelector.SILVER_MEDAL);
-        silver.resize(0,20);
-        bronze = UIResources.get(UISelector.BRONZE_MEDAL);
-        bronze.resize(0,20);
-        titulo = UIResources.get(UISelector.TITLE);
-        titulo.resize(0, 120);
     }
 
     private void loadMask() {
-        mask.add(parent.loadImage(MASKS_BASE_DIR + "mask8.png"));
-        mask.add(parent.loadImage(MASKS_BASE_DIR + "mask7.png"));
-        mask.add(parent.loadImage(MASKS_BASE_DIR + "mask1.png"));
-        mask.add(parent.loadImage(MASKS_BASE_DIR + "mask2.png"));
-        mask.add(parent.loadImage(MASKS_BASE_DIR + "mask3.png"));
-        mask.add(parent.loadImage(MASKS_BASE_DIR + "mask4.png"));
-        mask.add(parent.loadImage(MASKS_BASE_DIR + "mask5.png"));
-        mask.add(parent.loadImage(MASKS_BASE_DIR + "mask6.png"));
+        mask.add(parent.loadImage(MASKS_BASE_DIR + "mask8.png", "png"));
+        mask.add(parent.loadImage(MASKS_BASE_DIR + "mask7.png", "png"));
+        mask.add(parent.loadImage(MASKS_BASE_DIR + "mask1.png", "png"));
+        mask.add(parent.loadImage(MASKS_BASE_DIR + "mask2.png", "png"));
+        mask.add(parent.loadImage(MASKS_BASE_DIR + "mask3.png", "png"));
+        mask.add(parent.loadImage(MASKS_BASE_DIR + "mask4.png", "png"));
+        mask.add(parent.loadImage(MASKS_BASE_DIR + "mask5.png", "png"));
+        mask.add(parent.loadImage(MASKS_BASE_DIR + "mask6.png", "png"));
     }
 
     public void show() {
         parent.background(0);
+        parent.textMode(parent.SHAPE);
         parent.rectMode(parent.CORNER);
         parent.textMode(parent.CORNER);
         parent.textAlign(parent.CORNER, parent.CORNER);
         parent.imageMode(parent.CORNER);
-        if (boolScreenSelect == true) screenSelectName();
-        if (boolScreenRanking == true) screenRanking();
-    }
-
-    void loadScore(String nombre, int points){
-        TableRow newRow = ranking.addRow();
-        newRow.setString("Name",nombre);
-        newRow.setInt("Score",points);
-        parent.saveTable(ranking, MASKS_BASE_DIR + "ranking.csv");
-    }
-
-    void screenRanking(){
-        ranking.setColumnType(1, "int");
-        ranking.sortReverse("Score");
-        parent.fill(255);
-        parent.textSize(26);
-        parent.text("Ranking: ", 100, parent.height/5-30 );
-        parent.textSize(18);
-        int Yvalue = parent.height/4;
-        parent.text("Name ", 100,Yvalue-10 );
-        parent.text("Score ", 300, Yvalue-10 );
-        showRankingImg(Yvalue);
-        int max10 = 0; //Solo mostramos un max de 10
-        for (TableRow row : ranking.rows()) {
-            Yvalue +=25;
-            parent.text(row.getString("Name"), 100, Yvalue );
-            parent.text(row.getString("Score"), 300, Yvalue );
-            if(++max10 >= 10) break;
-        }
-
-        //Boton de Continuar
-        parent.fill(85, 154, 232);
-        parent.rect(parent.width/2-100/2, parent.height-70, 100, 50,7); //rectangulo para el texto
-        parent.fill(255);
-        parent.text("Continue", parent.width/2 - 40, parent.height-38 );
-    }
-
-    void showRankingImg(int Yvalue){
-        parent.image(crown, 240, parent.height/5-66);
-        parent.image(gold, 360, Yvalue+10);
-        parent.image(silver, 360, Yvalue+35);
-        parent.image(bronze, 360, Yvalue+60);
-        parent.image(titulo, 420, 30);
+        screenSelectName();
     }
 
     void screenSelectName(){
@@ -131,7 +67,11 @@ public class PreludeScreen extends Screen {
         parent.fill(85, 154, 232);
         parent.rect(parent.width/2-100/2, parent.height-70, 100, 50,7); //rectangulo para el texto
         parent.fill(255);
-        parent.text("Play", parent.width/2 - 50/2, parent.height-38 );
+        parent.text("Jugar", parent.width/2 - 50/2 - 3, parent.height-38 );
+    }
+
+    String getPlayerName() {
+        return playerName;
     }
 
     void screenSelectMask() {
@@ -180,5 +120,9 @@ public class PreludeScreen extends Screen {
         if (playerName.length() >= 20) return; //límite de caracteres
         if (parent.key >= 'A' && parent.key <= 'z') playerName+= parent.key;
         if (parent.key == 32) playerName+= " ";
+    }
+
+    PImage getSelectedMask() {
+        return mask.get(maskSelected);
     }
 }
