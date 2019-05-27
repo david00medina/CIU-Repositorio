@@ -149,8 +149,8 @@ class MainScreen extends Screen
             }
         }
         parent.triangle(parent.width - parent.width / 5.5f, parent.height/1.35f, parent.width - parent.width / 4.5f, parent.height/1.35f - parent.height / 26, parent.width - parent.width / 4.5f, parent.height/1.35f + parent.height / 26);
-
     }
+
     Boolean mouseOverButtonJugar()
     {
         return parent.mouseX >= parent.width/2 - parent.width / 14 && parent.mouseX <= parent.width/2 + parent.width / 14

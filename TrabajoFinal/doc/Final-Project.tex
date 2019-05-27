@@ -1,0 +1,336 @@
+\documentclass[10pt,a4paper]{report}
+\usepackage[utf8]{inputenc}
+\usepackage[spanish]{babel}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\usepackage{makeidx}
+\usepackage{graphicx}
+\usepackage{titlesec}
+\usepackage{sectsty}
+\usepackage{listings}
+\usepackage{color}
+\usepackage{float}
+\usepackage{hyperref}
+\usepackage{apacite}
+
+\titleformat{\chapter}[display]
+{\normalfont\bfseries}{}{0pt}{\Large}
+\chaptertitlefont{\Huge}
+
+\definecolor{codegreen}{rgb}{0,0.6,0}
+\definecolor{codegray}{rgb}{0.5,0.5,0.5}
+\definecolor{codepurple}{rgb}{0.58,0,0.82}
+\definecolor{backcolour}{rgb}{0.95,0.95,0.92}
+
+\lstdefinestyle{mystyle}{
+	backgroundcolor=\color{backcolour},   
+	commentstyle=\color{codegreen},
+	keywordstyle=\color{magenta},
+	numberstyle=\tiny\color{codegray},
+	stringstyle=\color{codepurple},
+	basicstyle=\footnotesize,
+	breakatwhitespace=false,         
+	breaklines=true,                 
+	captionpos=b,                    
+	keepspaces=true,                 
+	numbers=left,                    
+	numbersep=5pt,                  
+	showspaces=false,                
+	showstringspaces=false,
+	showtabs=false,                  
+	tabsize=2,
+	frame=lines
+}
+
+\lstset{style=mystyle}
+
+\author{Medina Medina, David Alberto
+	\\Brito Ramos, Christian
+	\\Benlliure Jiménez, Mª Cristina
+	\\Martynas Zabulionis
+	\\López González, Néstor}
+\title{JustLag Dance :\\ Afloja meneño}
+\begin{document}
+	\maketitle
+	\tableofcontents
+	\bibliographystyle{apacite}
+	\chapter{Introducción}
+	Este documento representa la memoria del trabajo final de la asignatura Creando Interfaces de Usuario para el curso 2018/19. 
+
+El objetivo del trabajo de curso consiste en la propuesta y desarrollo de un prototipo que haga uso de distintos elementos empleados a lo largo del curso, siendo estos: 
+
+	\begin{enumerate}
+	\item Gráficos
+	\item Cámaras
+	\item Captura y producción de audio
+	\item Sensores
+	\end{enumerate}
+	
+	El trabajo que hemos desarrollado se basa en el mítico juego de consolas Just Dance (\cite{github},\cite{teaser-video}) y sus derivados. Una descripción simple de este juego popular consiste en que el jugador tiene que mostrar su destreza bailando, adquiriendo posturas corporales que la interfaz le indique con la finalidad de conseguir una gran puntuación. Para conseguir capturar las posturas del jugador, se hace uso de una Kinnect.
+
+Nuestro prototipo es una versión muy simplificada del juego anteriormente mencionado, en el que el jugador puede seleccionar una canción de un repertorio que se encuentra en la pantalla principal, escribir su nombre de jugador y elegir entre una selección de máscaras una que llevará el esqueleto durante la partida, para seguidamente comenzar con el baile.
+
+La metodología que sigue el baile es la siguiente:
+
+	\begin{enumerate}
+	\item Se muestra en una sección de la pantalla una silueta de persona haciendo una postura.
+	\item El usuario tendrá un límite de tiempo para conseguir hacer la postura lo mejor posible.
+	\item Una vez se ha cumplido ese tiempo, la puntuación obtenida al hacer dicha postura se suma a un marcador de puntos global.
+	\item Se muestra en pantalla otra postura y comienza el mismo procedimiento.
+	\item El proceso finaliza cuando se acaba la canción.
+	\end{enumerate}
+	
+	En la escena se muestra la estructura de un esqueleto humano resultado de un algoritmo de seguimiento del cuerpo que procesa la \textit{Kinect v1.8} obteniendo como resultado la información de los puntos de articulación del mismo \cite{control.kinect-controller}.
+	
+	La \textit{Kinect} solo ofrece la posición de cada punto de articulación en el plano XY por lo que es necesario analizar la información que de los sensores IR si queremos conocer la profundidad de cada uno de los puntos de articulación que conforman el esqueleto.
+	
+	Al finalizar la canción se le mostrará al usuario un ranking top 10 de las mejores puntuaciones del juego.
+	
+	\chapter{Detección de posturas}
+	El método empleado para la detección de posturas evalúa dos esqueletos, ambos capturados con la Kinnect. Llamaremos esqueleto a la detección de un ser humano por la Kinnect. Este esqueleto se almacena en memoria como un vector que contiene las cordenadas (X,Y,Z) de los puntos articulados del mismo. 
+		
+	Los datos son cargados de un CSV donde se persiste la información de la nube de puntos que define la postura modelo de un movimiento de baile. Cada postura de baile queda identificada con una clave única siguiendo el estándar \texttt{UUID versión 4}.
+	
+	Una vez ya tenemos las dos posturas que vamos a evaluar, es necesario estandarizar la postura de tal forma que se pueda comparar. Lo que hemos hecho, es escoger el punto de la espina (SPINE\_X,SPINE\_Y,SPINE\_Z) como punto de referencia, de tal manera que transladaremos el esqueleto completo al origen de coordenas resultando el punto anterior como el (0,0,0).
+
+El siguiente paso a seguir es calcular la distancia euclídea de cada uno de los puntos del esqueleto que vamos a tomar de referencia con los puntos del esqueleto que vamos a evaluar. Este valor de la distancia, lo vamos a considerar el error en cada punto, por lo que si sumamos todas las distancias entre todos los puntos de ambos esqueletos, obtendremos el error global. Cuanto menor sea este valor, más similitud hay entre las posturas de los esqueletos. Si el valor total del error es 0, se considera que las dos posturas son la misma.
+	
+	\chapter{Método y materiales}
+	\section{Materiales}
+	El desarrollo de este proyecto se ha llevado a cabo utilizando el IDE de desarrollo de aplicaciones \textit{Java} de \textit{JetBrains}, \textit{IntelliJ}, y las siguientes herramientas:
+	\begin{itemize}
+		\item Librería \textit{Processing} \cite{processing-javadoc}.
+		\item Librería \textit{Kinect4WinSDK} \cite{kinect4winsdk}.
+		\item Librería \textit{Sound} \cite{sound-library}.
+		\item Librería \textit{Minim}.
+		\item Librería \textit{Commons-CSV} de \textit{Apache}
+		\item \textit{Kinect v1.8} \cite{control.kinect-sdk}
+		\item Botones e iconos de juego desarrollados con \textit{Photoshop} e \textit{Illustrator}.
+	\end{itemize}
+	
+	Las imágenes no propias del grupo que se usaron para el juego son las siguientes: 
+	\begin{itemize}
+	\item La corona y las medallas de la pantalla de ranking
+	\item Los iconos de la pantalla de juego
+	\item Las máscaras de la pantalla previa al juego.
+	\end{itemize}
+
+La mayoría de estas imágenes se obtuvieron de la siguiente página https://www.flaticon.com/ \cite{imagenes-no-originales}.  Donde desde la propia página se puede cambiar los colores del icono y el tamaño.
+Las máscaras del personaje se encontraron en google ya que se eligieron algunas en modo demo. 
+
+	
+	\section{Método}
+	Las siguientes clases que se definenen en este documente se organizan en los siguientes paquetes:
+	\begin{enumerate}
+		\item model
+		\item gui
+		\item control
+	\end{enumerate}
+
+	\subsection{Paquete \texttt{gui}}
+	\subsubsection{Clase \texttt{Main}}\label{class:main}
+	Para poder utilizar las primitivas de \textit{Processing} esta clase debe heredar de \texttt{PApplet}. Para iniciar una aplicación de \textit{Processing}, el método estático \texttt{main()} debe llamar a la primitiva \texttt{PApplet.main()} para indicar el nombre de la clase principal desde la cual se llama y sobrescriben los métodos primitivos: \texttt{settings(), setup()} y \texttt{draw()}.
+	
+	\lstinputlisting[language=Java, firstline=161, lastline=163]{../src/gui/Main.java}
+	
+	El método primitivo \texttt{settings()} establece el tamaño de la pantalla llamando al método \texttt{size()} y pasándole la marca del renderizador de gráficos 3D (\texttt{P3D}).
+	
+	\lstinputlisting[language=Java, firstline=26, lastline=30]{../src/gui/Main.java}
+	
+	El método \texttt{setup()} inicializa las pantallas que serán utilizadas en \textit{JustLag Dance} -- pantalla principal, de preludio, de juego y de ranking.
+	
+	\lstinputlisting[language=Java, firstline=33, lastline=47]{../src/gui/Main.java}
+	
+	El método privado \texttt{initializeUI()} inicializa todos los botones e iconos que serán utilizados en el juego.
+	
+	\lstinputlisting[language=Java, firstline=49, lastline=81]{../src/gui/Main.java}
+	
+	El método primitivo \texttt{draw()} refresca el estado del juego y muestra la pantalla correspondiente en cada caso.
+	
+	\lstinputlisting[language=Java, firstline=83, lastline=102]{../src/gui/Main.java}	
+	
+	El método primitivo \texttt{mouseReleased()} lee los eventos de ratón en el momento en el que el usuario haga clic sobre cualquier botón de pantalla.
+	 
+	 \lstinputlisting[language=Java, firstline=104, lastline=140]{../src/gui/Main.java}	
+	 
+	 La pantalla de preludio lee los eventos de teclado a la espera de que el usuario introduzca su nombre de jugador.
+	 
+	 \lstinputlisting[language=Java, firstline=142, lastline=147]{../src/gui/Main.java}	
+	 
+	 A continuación, se gestionan los eventos primitivos de la cámara \textit{Kinect} delegando el tratamiento de los mismo en la clase \texttt{GameScreen}.
+	 
+	 \lstinputlisting[language=Java, firstline=149, lastline=159]{../src/gui/Main.java}	
+	 
+	 \subsubsection{Clase abstracta \texttt{Screen}}
+	 Se encarga de proporcionar el método abstracto \texttt{show()} a las clases \texttt{MainScreen}, \texttt{PreludeScreen}, \texttt{GameScreen} y \texttt{RankingScreen}.
+	 
+	 Esta clase contiene, además, el mapa de recursos que será utilizado en el juego, así como los método \texttt{readDancerDataFromCSV()} que es necesarios para leer puntos de posturas modelos de nuestra biblioteca de posturas almacenadas en el fichero \texttt{data\_postures.csv}.
+	 
+	 Los métodos \texttt{writeDancerDataToCSV()} y el método priviado \texttt{generateHeaders()} son utilizados para escribir nuevos modelos en la biblioteca de posturas de baile.
+	 
+	 \lstinputlisting[language=Java, firstline=34, lastline=102]{../src/gui/Screen.java}
+	 
+	 \subsubsection{Clase \texttt{MainScreen}}
+	 Su método \texttt{show()} se encarga de la creación de la pantalla principal, donde se puede elegir una canción para el juego. Se cambia la canción pulsando algún de los do botones (la previa o siguiente canción) y al cambiar ella se empieza a reproducirse. Después de elegirla se pulsa el botón \texttt{JUGAR}.
+	 
+	 El botón \texttt{JUGAR} y el selector de canciones es mostrado por pantalla cuando se llama al método público \texttt{show()}.
+	 
+	 \lstinputlisting[language=Java, firstline=53, lastline=152]{../src/gui/MainScreen.java}
+
+La clase carga las canciones de cierta carpeta, dibuja los tres botones, campo del título de canción, pone el logo e implementa varias funciones. Las funciones \texttt{mouseOverButtonJugar()}, \texttt{mouseOverButtonPrevious()}, \texttt{mouseOverButtonNext()} para saber si los botones están pulsados. Las funciones \texttt{setNextSong()} y \texttt{setPreviousSong()} sirven para cambiar la canción. Y por último \texttt{getCurrentSong()} para manejar la canción actual.
+
+	\lstinputlisting[language=Java, firstline=154, lastline=201]{../src/gui/MainScreen.java}
+
+	 
+	 \subsubsection{Clase \texttt{PreludeScreen}}
+	 En la Clase PreludeScreen se agrupan todos los métodos que se encargan del diseño y de la lectura de la información para la pantalla previa al juego, donde el usuario indica su nombre y selecciona la máscara de su personaje.
+	 
+	Además, el jugador podrá seleccionar la máscara de baile de su avatar virtual, así como indicar su nombre de jugador.
+	
+	\lstinputlisting[language=Java, firstline=18, lastline=94]{../src/gui/PreludeScreen.java}
+	 
+Por lo tanto nos encontramos con el control de los eventos de ratón y teclado para esa pantalla (\texttt{mouseOverBack()},  \texttt{mouseOverPlay()}, \texttt{mouseOverMainScreen()}, \texttt{mouseOverLeft()}, \texttt{mouseOverRight()}, keyboardTextArea()), los cuales se usan para el boton de \texttt{atras}, los botones de selección de máscara y el botón de \texttt{play}.
+
+	\lstinputlisting[language=Java, firstline=96, lastline=127]{../src/gui/PreludeScreen.java}
+	 
+	 \subsubsection{Clase \texttt{GameScreen}}\label{class:gamescreen}
+	 Se encarga de la creación de la cuenta atrás inicial al empezar a jugar y de la pantalla de juego. Muestra el tiempo restante de la canción, carga y visualiza las imágenes de reloj, de los botones atrás y pausar, también carga las imágenes de las posturas de cierta carpeta y las visualiza. Demuestra la puntuación actual y total, implementa el vuelo de la puntuación actual hacia la total e implementa agrandamiento del campo del puntuación total. Cambia la imágen de posturas aleatoriamente cada 4 segundos y realiza la cuenta atrás.
+Antes de demostrar la pantalla de juego, demuestra la cuenta atrás inicial.
+
+	Las funciones \texttt{mouseOverButtonBack()}, mouseOverButtonPause() sirven para saber si los botones están pulsados. \texttt{setInitialCount()} anula algunas variables y prepara para la cuenta atrás inicial. \texttt{pause()} hace pause o reanuda el juego.
+
+	Los métodos \texttt{appearEvent()}, \texttt{disappearEvent()} y \texttt{moveEvent()} son los responsables de recibir los eventos de la cámara \textit{Kinect} y delegar la señal a la clase \texttt{Kinect}.
+	
+	El método \texttt{setMask()} envía la imagen seleccionada por el jugador a la clase \texttt{Kinect} para que proceda a pintarla sobre la cabeza del avatar virtual.
+
+	\lstinputlisting[language=Java, firstline=47, lastline=366]{../src/gui/GameScreen.java}
+	 
+	 
+	 \subsubsection{Clase \texttt{RankingScreen}}
+	 Se encarga de la creación de la pantalla de ranking final, donde se lee un CVS que guarda la información de las puntuaciones. Para ello usamos la clase Table propia de processing donde permite ordenar el CSV llamando al método sort. Una vez ordenadas las puntuaciones las mostramos en pantalla hasta un máximo de 10 y añadimos medallas a las tres mejores. 
+	El método que se encarga de guardar la puntuación nueva en el CSV también se encuentra en esta clase, el cual es llamado una vez que se acaba la canción.
+	
+	\lstinputlisting[language=Java, firstline=18, lastline=97]{../src/gui/RankingScreen.java}
+	 
+	 \subsubsection{Clase \texttt{UISelector}}
+	Esta clase enumerada es utilizada como selector de iconos y botones que serán utilizados por todas las pantallas del juego.
+	
+	\lstinputlisting[language=Java, firstline=3, lastline=39]{../src/gui/UISelector.java}
+	
+	\subsection{Paquete \texttt{control}}
+	\subsubsection{Clase \texttt{kinect.Kinect}}\label{class:kinect.Kinect}
+	Esta clase es la interfaz que permite interactuar con la \textit{Kinect v1.8}. El constructor acepta los siguientes parámetros:
+	\begin{description}
+	\item[parent] Es una referencia a un objeto de la clase principal \texttt{KinectMe}.
+	\item[pos] Establece al posición inicial en el espacio tridimensional de la imágenes obtenidas desde la \textit{Kinect v1.8}.
+	\item[scale] Establece la escala de la imagen.
+	\item[skeletonRGB] Se trata de un vector que ajusta el color del esqueleto que se muestra por pantalla.
+	\end{description}
+	
+	\lstinputlisting[language=Java, firstline=30, lastline=44]{../src/control/kinect/Kinect.java}
+	
+	El método \texttt{refresh()} permite refrescar las imágenes que se muestran por pantalla así como visualizar el esqueleto detectado por la \textit{Kinect}. El primer parámetro de este método es un selector de la clase \texttt{KinectSelector} permite elegir entre las diferentes opciones de visualización. El segundo parámetro, es una variable booleana que permite visualizar por pantalla las imágenes obtenidas de la \textit{Kinect} cuando se asigna a \texttt{true}.
+	
+	\lstinputlisting[language=Java, firstline=75, lastline=117]{../src/control/kinect/Kinect.java}
+	
+	El método \texttt{bodyTracking()} muestra por pantalla todos los esqueletos detectados por la \textit{Kinect} con cada llamada al método \texttt{drawSkeleton()}. Este último, sondea todos los puntos de articulación que conforman el esqueleto detectado e imprime por pantalla cada una de las partes que conforman el esqueleto.
+	
+	\lstinputlisting[language=Java, firstline=119, lastline=144]{../src/control/kinect/Kinect.java}
+	
+	Los puntos son sondeados con la llamada al método \texttt{collectPoints()}.
+	
+	\lstinputlisting[language=Java, firstline=164, lastline=170]{../src/control/kinect/Kinect.java}
+	
+	Cada una de las partes que componen el esqueleto son construidas llamando al método correspondiente. Cada método realiza una llamada a \texttt{DrawBone()} con dos selectores de puntos de articulación (\texttt{KinectAnathomy}) como argumentos.
+	
+	\lstinputlisting[language=Java, firstline=172, lastline=229]{../src/control/kinect/Kinect.java}
+	
+	\texttt{DrawBone()} toma dos selectores de articulación y pinta una línea entre esos dos puntos originando, de este modo, una articulación. 
+	
+	En el caso de pintar el punto de articulación de las manos, se comprueba si el radio es mayor que 0. Si es así, se pinta una esfera del radio que se ha especificado.
+	
+	En este método se carga la máscara del avatar virtual localizando el punto de la cabeza.
+	
+	\lstinputlisting[language=Java, firstline=231, lastline=278]{../src/control/kinect/Kinect.java}
+	
+	La gestión de los eventos mencionados al final de la sección \ref{class:main} y sección \ref{class:gamescreen} son gestionados en los métodos \texttt{appearEvent(), disappearEvent()} y \texttt{moveEvent()} de esta clase.
+	
+	\lstinputlisting[language=Java, firstline=280, lastline=311]{../src/control/kinect/Kinect.java}
+	
+	
+	\subsubsection{Enumerado \texttt{kinect.KinectAnathomy}}
+	Este enumerado identifica los diferentes puntos de articulación detectados por la \textit{Kinect v1.8}.
+	
+	\lstinputlisting[language=Java, firstline=11, lastline=48]{../src/control/kinect/KinectAnathomy.java}
+	
+	Las coordenadas de cada punto de articulación --incluida la profundidad-- son calculadas en el método \texttt{getJointPos()}.
+	
+	\lstinputlisting[language=Java, firstline=50, lastline=58]{../src/control/kinect/KinectAnathomy.java}
+	
+	El cálculo de la profundidad se obtiene a partir de la imagen en blanco y negro que devuelve la librería \texttt{Kinect4WinSDK} tras llamar a la primitiva \texttt{GetDepth()}.
+	
+	Para establecer la profundidad de cada punto de articulación se analiza cada uno de los píxeles de la imagen devuelta por \texttt{GetDepth()} y se toma el byte menos significativo. Posteriormente, se comprueba que el valor del byte se encuentre en el rango umbral del intervalo $\left[ 100, 250\right]$. El rango de profundidad se establece en el intervalo $\left[ 0, 360\right]$ y se asigna este valor al punto de articulación correspondiente.
+	
+	\lstinputlisting[language=Java, firstline=60, lastline=82]{../src/control/kinect/KinectAnathomy.java}
+	
+	
+	\subsubsection{Enumerado \texttt{kinect.KinectSelector}}
+	Este enumerado permite seleccionar entre el tipo de imagen que se desea mostrar por pantalla:
+	\begin{itemize}
+	\item RGB
+	\item DEPTH
+	\item MASK
+	\item NONE
+	\end{itemize}
+	
+	\lstinputlisting[language=Java, firstline=3, lastline=8]{../src/control/kinect/KinectSelector.java}
+	
+	\subsubsection{Clase \texttt{algorithms.Statistics}}
+	Contiene diversos métodos que servirán de ayuda para calcular los errores de las posturas cuando se estén evaluando.
+Dentro de esta clase podemos encontrar métodos que calculan la distancia euclídea, media, desviación estándar, obtención de puntos de una postura en un PVector, potencia, suma y normalización de puntos
+
+	\lstinputlisting[language=Java, firstline=13, lastline=154]{../src/control/algorithms/Statistics.java}
+	
+	\subsubsection{Clase \texttt{algorithms.Transformation}}
+	Esta clase métodos estáticos necesarios para realizar translaciones y rotaciones (\cite{rotation-matrix}, \cite{rotation}) de cuerpos tridimensionales. Es posible mover todos los puntos de cualquier postura almacenada en objetos \texttt{DancerData} con respecto a un punto de referencia colocado en el origen de coordenadas.
+	
+	\lstinputlisting[language=Java, firstline=9, lastline=66]{../src/control/algorithms/Transformation.java}
+	
+	\subsubsection{Clase \texttt{csv.CSVTools}}
+	Esta clase simplemente contiene dos estáticos métodos que tienen la función tanto de lectura de un fichero CSV como la de escritura.
+
+	\lstinputlisting[language=Java, firstline=18, lastline=62]{../src/control/csv/CSVTools.java}
+	
+	\subsection{Paquete \texttt{model}}
+	\subsubsection{Clase \texttt{postures.DancerData}}
+	La clase \texttt{DancerData} es utilizada como estructura de datos para acceder a los puntos que conforman el esqueleto de las medidas obtenidas con la \textit{Kinect} y/o los modelos almacenados en la biblioteca de posturas de baile modelo.
+	
+	\lstinputlisting[language=Java, firstline=16, lastline=117]{../src/model/postures/DancerData.java}
+	
+
+	\subsubsection{Clase \texttt{sound.Song}}
+	En la clase \texttt{Song} se agrupa todos los métodos y atributos relativos a una canción. Una canción se genera a partir de un fichero de audio. Los métodos implementados permiten que una canción se pueda reproducir (\texttt{play()}), parar (\texttt{pause()}) y detener (\texttt{stop()}). También permite es posible mostrar el tiempo restante para que termine la canción, así como comprobar en cada momento si la canción está siendo reproducida.
+
+Para la implementación de esta clase, se hace uso de la librería \texttt{Minim}, utilizando la clase \texttt{AudioPlayer} y sus métodos para poder hacer uso de las funciones de la clase \texttt{Song}.
+
+	\lstinputlisting[language=Java, firstline=9, lastline=49]{../src/model/sound/Song.java}
+
+		
+	\chapter{Descripción del trabajo desarrollado por cada integrante}
+	Todos los miembros del equipo participaron activamente en el proyecto. Los métodos de control de la kinect fue desarrollado por David
+	
+	La obtención de puntos, el algoritmo que se encarga de obtener el error respecto al jugador, además de la corrección de diversos ajustes generales para el correcto funcionamiento y visualización de los elementos, fue desarrollado por David y Christian.
+	
+	El sonido del juego y la selección de posturas para el funcionamiento del juego se encargó Nestor.
+	
+En lo referido a la pantalla inicial y la pantalla de juego principal se encargó de ello Martynas.
+
+Finalmente, Cristina se encargó de las los dibujos del juego, como las figuras de las posturas o el diseño del título, además de encargarse de la pantalla de selección del jugador y la pantalla de ranking final. 
+
+	
+	\chapter{Problemas encontrados junto con sus soluciones}	
+	Dentro de los problemas encontrados en el desarrollo del trabajo, no destaca ninguno en especial. Sobre todo problemas para encontrar librerías que se ajustaran a los requerimientos que necesitábamos y en general problemas con el modelo que evalúa el error de las posturas. Para éste último, ha sido necesaria la prueba de  diversos mecanismos que hallaran un resultado óptimo, finalmente nos decantamos por el que estamos usando pero con cierto remordimiento de no haber podido usar algún método de inteligencia artificial por motivos de tiempo.
+	
+	\bibliography{Report-Final-Project}
+\end{document}

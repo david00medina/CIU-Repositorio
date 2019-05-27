@@ -11,7 +11,6 @@ import java.util.Map;
 
 public class Kinect {
     private PApplet parent;
-
     private kinect4WinSDK.Kinect kinect;
     private ArrayList<SkeletonData> bodies;
     private PImage img;
@@ -26,7 +25,6 @@ public class Kinect {
 
     private final int xOffset = -15;
     private final int yOffset = 30;
-
     private PImage mask;
 
     public Kinect(PApplet parent, PVector pos, Float scale, Float[] skeletonRGB) {

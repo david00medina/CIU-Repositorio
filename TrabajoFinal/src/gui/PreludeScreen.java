@@ -89,6 +89,10 @@ public class PreludeScreen extends Screen {
         parent.triangle(440,300,460,330,440,360);
     }
 
+    PImage getSelectedMask() {
+        return mask.get(maskSelected);
+    }
+
     boolean mouseOverBack() {
             //Boton de ir al menú principal
         return (parent.mouseX >= 10 && parent.mouseX <= 60) && (parent.mouseY >= 10 && parent.mouseY <= 60);
@@ -120,9 +124,5 @@ public class PreludeScreen extends Screen {
         if (playerName.length() >= 20) return; //límite de caracteres
         if (parent.key >= 'A' && parent.key <= 'z') playerName+= parent.key;
         if (parent.key == 32) playerName+= " ";
-    }
-
-    PImage getSelectedMask() {
-        return mask.get(maskSelected);
     }
 }

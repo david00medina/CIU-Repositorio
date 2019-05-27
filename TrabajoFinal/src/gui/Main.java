@@ -6,7 +6,7 @@ import processing.core.PImage;
 
 import java.util.HashMap;
 
-public class KinectMe extends PApplet {
+public class Main extends PApplet {
     private static final String SOUND_DIR = ".\\res\\sound";
     private static final String POSTURES_CSV = ".\\res\\data\\dance_postures.csv";
     private static final String RANKING_CSV = "..\\res\\data\\ranking.csv";
@@ -27,14 +27,13 @@ public class KinectMe extends PApplet {
     public void settings() {
         super.settings();
         size(640, 480, P3D);
-//        fullScreen(P3D);
     }
 
 
     @Override
     public void setup() {
         super.setup();
-//        smooth();
+        smooth();
         stroke(255);
 
         initializeUI();
@@ -160,6 +159,6 @@ public class KinectMe extends PApplet {
     }
 
     public static void main(String[] args) {
-        PApplet.main("gui.KinectMe");
+        PApplet.main("gui.Main");
     }
 }
